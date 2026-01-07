@@ -1038,16 +1038,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mock Data Structure for Cascade
     // Structure: { typeName: { deviceName: [station1, station2, ...] } }
     let cascadeData = {
-        '吸塑机': {
-        },
-        '注塑机': {
-        },
-        '冲压机': {
-        },
-        '焊接机': {
-        },
-        '装配线': {
-        }
     };
 
     // Current Selections
@@ -1070,8 +1060,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const listDevice = document.getElementById('list-device');
     const listStation = document.getElementById('list-station');
 
-    // Available Options for Dropdowns (Mock)
-    const availableTypes = ['吸塑机','注塑机', '冲压机', '焊接机', '装配线'];
     const availableDevices = ['25号吸塑机', '26号吸塑机', '30号注塑机', '31号注塑机', '32号冲压机', '33号焊接机', '34号装配线'];
     const availableStations = ['成型工位', '剪边工位', '上料工位', '加热工位', '伺服电机'];
 
