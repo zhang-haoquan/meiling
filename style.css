@@ -695,6 +695,37 @@ body {
     width: 100%;
 }
 
+.text-input-wrapper {
+    flex: 1;
+    width: 100%;
+}
+
+.text-input-field {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, background-color 0.2s;
+    background-color: #fff;
+}
+
+.text-input-field:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.text-input-field::placeholder {
+    color: #999;
+}
+
+.text-input-field:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    color: #00000040;
+}
+
 .ms-trigger {
     width: 100%;
     padding: 8px 12px;

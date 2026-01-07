@@ -1075,15 +1075,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const availableDevices = ['25号吸塑机', '26号吸塑机', '30号注塑机', '31号注塑机', '32号冲压机', '33号焊接机', '34号装配线'];
     const availableStations = ['成型工位', '剪边工位', '上料工位', '加热工位', '伺服电机'];
 
-    // MultiSelect Class
-    class MultiSelect {
-        constructor(wrapperId, placeholder, options) {
+    // TextInput Class for Cascade Fields
+    class TextInput {
+        constructor(wrapperId, placeholder, onAdd) {
             this.wrapper = document.getElementById(wrapperId);
             this.placeholder = placeholder;
-            this.options = options;
-            this.selectedValues = new Set();
-            this.isOpen = false;
-            this.disabled = false;
+            this.onAdd = onAdd;
 
             if (this.wrapper) {
                 this.render();
@@ -1093,260 +1090,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
         render() {
             this.wrapper.innerHTML = `
-                <div class="ms-trigger" title="${this.placeholder}">
-                    <span class="ms-trigger-text">${this.placeholder}</span>
-                    <i class="fa-solid fa-chevron-down ms-trigger-icon"></i>
-                </div>
-                <div class="ms-dropdown">
-                    <div class="ms-search-box">
-                        <input type="text" class="ms-search-input" placeholder="搜索...">
-                    </div>
-                    <div class="ms-actions">
-                        <label><input type="checkbox" class="ms-select-all"> 全选</label>
-                        <span class="ms-count">已选 0 项</span>
-                    </div>
-                    <div class="ms-options"></div>
-                    <div class="ms-add-box">
-                        <input type="text" class="ms-add-input" placeholder="输入新数据项">
-                        <button class="ms-add-btn"><i class="fa-solid fa-plus"></i> 添加</button>
-                    </div>
-                </div>
+                <input type="text" 
+                       class="text-input-field" 
+                       placeholder="${this.placeholder}"
+                       maxlength="20">
             `;
-
-            this.trigger = this.wrapper.querySelector('.ms-trigger');
-            this.triggerText = this.wrapper.querySelector('.ms-trigger-text');
-            this.dropdown = this.wrapper.querySelector('.ms-dropdown');
-            this.searchInput = this.wrapper.querySelector('.ms-search-input');
-            this.selectAllCheckbox = this.wrapper.querySelector('.ms-select-all');
-            this.countSpan = this.wrapper.querySelector('.ms-count');
-            this.optionsContainer = this.wrapper.querySelector('.ms-options');
-            this.addInput = this.wrapper.querySelector('.ms-add-input');
-            this.addBtn = this.wrapper.querySelector('.ms-add-btn');
-
-            this.renderOptions(this.options);
-        }
-
-        renderOptions(optionsToRender) {
-            this.optionsContainer.innerHTML = '';
-            if (optionsToRender.length === 0) {
-                this.optionsContainer.innerHTML = '<div class="ms-empty">无匹配项</div>';
-                return;
-            }
-
-            optionsToRender.forEach(opt => {
-                const item = document.createElement('div');
-                item.className = `ms-option-item ${this.selectedValues.has(opt) ? 'selected' : ''}`;
-                item.innerHTML = `
-                    <input type="checkbox" value="${opt}" ${this.selectedValues.has(opt) ? 'checked' : ''}>
-                    <span class="ms-option-text">${opt}</span>
-                    <i class="fa-solid fa-times ms-option-delete" title="删除"></i>
-                `;
-                
-                // Click handler for row (excluding delete button)
-                item.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('ms-option-delete')) return;
-                    if (e.target.tagName !== 'INPUT') {
-                        const cb = item.querySelector('input');
-                        cb.checked = !cb.checked;
-                        this.toggleValue(opt, cb.checked);
-                    }
-                });
-
-                // Change handler for checkbox
-                item.querySelector('input').addEventListener('change', (e) => {
-                    this.toggleValue(opt, e.target.checked);
-                });
-
-                // Delete handler
-                item.querySelector('.ms-option-delete').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.removeOption(opt);
-                });
-
-                this.optionsContainer.appendChild(item);
-            });
-        }
-
-        removeOption(value) {
-            const index = this.options.indexOf(value);
-            if (index > -1) {
-                this.options.splice(index, 1);
-                this.selectedValues.delete(value);
-                this.renderOptions(this.options);
-                this.updateUI();
-            }
+            this.input = this.wrapper.querySelector('.text-input-field');
         }
 
         bindEvents() {
-            // Toggle Dropdown
-            this.trigger.addEventListener('click', (e) => {
-                if (this.disabled) return;
-                e.stopPropagation();
-                this.toggleDropdown();
-            });
-
-            // Search
-            this.searchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                const filtered = this.options.filter(opt => opt.toLowerCase().includes(term));
-                this.renderOptions(filtered);
-            });
-
-            // Select All
-            this.selectAllCheckbox.addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                const visibleInputs = this.optionsContainer.querySelectorAll('input[type="checkbox"]');
-                visibleInputs.forEach(input => {
-                    input.checked = isChecked;
-                    this.toggleValue(input.value, isChecked, false);
-                });
-                this.updateUI();
-            });
-
-            // Add New Item
-            this.addBtn.addEventListener('click', () => {
-                this.addNewItem();
-            });
-
-            // Add New Item on Enter key
-            this.addInput.addEventListener('keydown', (e) => {
+            this.input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.addNewItem();
                 }
             });
-
-            // Prevent closing when clicking inside dropdown
-            this.dropdown.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
         }
 
         addNewItem() {
-            const value = this.addInput.value.trim();
+            const value = this.input.value.trim();
             
             if (!value) {
                 return;
             }
 
-            if (this.options.includes(value)) {
-                alert('该数据项已存在');
+            if (value.length > 20) {
+                alert('输入内容不能超过20个字符');
                 return;
             }
 
-            this.options.push(value);
-            this.addInput.value = '';
-            
-            this.renderOptions(this.options);
-            
-            // Flash effect to show new item was added
-            this.optionsContainer.querySelectorAll('.ms-option-item').forEach(item => {
-                if (item.querySelector('input').value === value) {
-                    item.style.backgroundColor = '#e6f7ff';
-                    setTimeout(() => {
-                        item.style.backgroundColor = '';
-                    }, 500);
-                }
-            });
-        }
-
-        toggleValue(value, isSelected, updateUI = true) {
-            if (isSelected) {
-                this.selectedValues.add(value);
-            } else {
-                this.selectedValues.delete(value);
+            if (this.onAdd) {
+                this.onAdd(value);
             }
-            if (updateUI) this.updateUI();
+
+            this.input.value = '';
         }
 
-        updateUI() {
-            const count = this.selectedValues.size;
-            if (count === 0) {
-                this.triggerText.textContent = this.placeholder;
-                this.triggerText.style.color = '#999';
-            } else {
-                this.triggerText.textContent = `已选 ${count} 项`;
-                this.triggerText.style.color = 'var(--text-color)';
+        focus() {
+            if (this.input) {
+                this.input.focus();
             }
-            this.countSpan.textContent = `已选 ${count} 项`;
-
-            // Update row styles
-            const items = this.optionsContainer.querySelectorAll('.ms-option-item');
-            items.forEach(item => {
-                const val = item.querySelector('input').value;
-                if (this.selectedValues.has(val)) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
-        }
-
-        toggleDropdown() {
-            if (this.isOpen) {
-                this.closeDropdown();
-            } else {
-                this.openDropdown();
-            }
-        }
-
-        openDropdown() {
-            // Close others
-            document.querySelectorAll('.ms-dropdown.open').forEach(el => el.classList.remove('open'));
-            document.querySelectorAll('.ms-trigger.active').forEach(el => el.classList.remove('active'));
-
-            this.dropdown.classList.add('open');
-            this.trigger.classList.add('active');
-            this.isOpen = true;
-            this.searchInput.focus();
-        }
-
-        closeDropdown() {
-            this.dropdown.classList.remove('open');
-            this.trigger.classList.remove('active');
-            this.isOpen = false;
-            this.searchInput.value = ''; 
-            this.addInput.value = ''; // Clear add input when closing
-            this.renderOptions(this.options); // Reset list
         }
 
         setDisabled(disabled) {
-            this.disabled = disabled;
             if (disabled) {
-                this.trigger.classList.add('disabled');
-                this.closeDropdown();
+                this.input.disabled = true;
+                this.input.style.backgroundColor = '#f5f5f5';
             } else {
-                this.trigger.classList.remove('disabled');
+                this.input.disabled = false;
+                this.input.style.backgroundColor = '#fff';
             }
-        }
-
-        getSelected() {
-            return Array.from(this.selectedValues);
-        }
-
-        clearSelection() {
-            this.selectedValues.clear();
-            this.updateUI();
-            this.renderOptions(this.options);
         }
     }
 
     // Instances
-    let msType, msDevice, msStation;
+    let tiType, tiDevice, tiStation;
 
-    // Initialize Dropdowns
-    function initCascadeDropdowns() {
-        msType = new MultiSelect('ms-wrapper-type', '请选择设备类型', availableTypes);
-        msDevice = new MultiSelect('ms-wrapper-device', '请选择设备', availableDevices);
-        msStation = new MultiSelect('ms-wrapper-station', '请选择工位', availableStations);
+    // Initialize Text Inputs
+    function initCascadeInputs() {
+        tiType = new TextInput('ti-wrapper-type', '点击回车添加，最多输入20个字', (value) => {
+            if (!cascadeData[value]) {
+                cascadeData[value] = {};
+                renderCascadeLists();
+                // Automatically select the newly added item
+                selectTypeItem(value);
+            } else {
+                alert('该设备类型已存在');
+            }
+        });
+        
+        tiDevice = new TextInput('ti-wrapper-device', '点击回车添加，最多输入20个字', (value) => {
+            if (!selectedType) {
+                alert('请先选择设备类型');
+                return;
+            }
+            if (!cascadeData[selectedType][value]) {
+                cascadeData[selectedType][value] = [];
+                renderCascadeLists();
+                selectDeviceItem(value);
+            } else {
+                alert('该设备已存在于当前类型下');
+            }
+        });
+        
+        tiStation = new TextInput('ti-wrapper-station', '点击回车添加，最多输入20个字', (value) => {
+            if (!selectedType || !selectedDevice) {
+                alert('请先选择设备和设备类型');
+                return;
+            }
+            const currentStations = cascadeData[selectedType][selectedDevice];
+            if (!currentStations.includes(value)) {
+                currentStations.push(value);
+                renderStationList();
+            } else {
+                alert('该工位已存在于当前设备下');
+            }
+        });
     }
-
-    // Global click listener to close dropdowns
-    document.addEventListener('click', (e) => {
-        if (msType && msType.isOpen) msType.closeDropdown();
-        if (msDevice && msDevice.isOpen) msDevice.closeDropdown();
-        if (msStation && msStation.isOpen) msStation.closeDropdown();
-    });
 
     // Render Lists
     function renderCascadeLists() {
@@ -1431,87 +1271,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCascadeLists();
     }
 
-    // Add Handlers
-    if (btnAddType) {
-        btnAddType.onclick = () => {
-            const values = msType.getSelected();
-            if (values.length === 0) {
-                alert('请选择至少一个设备类型');
-                return;
-            }
-            
-            let addedCount = 0;
-            values.forEach(val => {
-                if (!cascadeData[val]) {
-                    cascadeData[val] = {};
-                    addedCount++;
-                }
-            });
-
-            if (addedCount > 0) {
-                msType.clearSelection();
-                // If only one added and no selection, select it? 
-                // Let's just render.
-                renderCascadeLists();
-            } else {
-                alert('所选设备类型已全部存在');
-            }
-        };
-    }
-
-    if (btnAddDevice) {
-        btnAddDevice.onclick = () => {
-            if (!selectedType) return;
-            const values = msDevice.getSelected();
-            if (values.length === 0) {
-                alert('请选择至少一个设备');
-                return;
-            }
-            
-            let addedCount = 0;
-            values.forEach(val => {
-                if (!cascadeData[selectedType][val]) {
-                    cascadeData[selectedType][val] = [];
-                    addedCount++;
-                }
-            });
-
-            if (addedCount > 0) {
-                msDevice.clearSelection();
-                renderCascadeLists();
-            } else {
-                alert('所选设备已全部存在于当前类型下');
-            }
-        };
-    }
-
-    if (btnAddStation) {
-        btnAddStation.onclick = () => {
-            if (!selectedType || !selectedDevice) return;
-            const values = msStation.getSelected();
-            if (values.length === 0) {
-                alert('请选择至少一个工位');
-                return;
-            }
-            
-            let addedCount = 0;
-            const currentStations = cascadeData[selectedType][selectedDevice];
-            values.forEach(val => {
-                if (!currentStations.includes(val)) {
-                    currentStations.push(val);
-                    addedCount++;
-                }
-            });
-
-            if (addedCount > 0) {
-                msStation.clearSelection();
-                renderStationList();
-            } else {
-                alert('所选工位已全部存在于当前设备下');
-            }
-        };
-    }
-
     // Delete Handlers
     function deleteTypeItem(type) {
         delete cascadeData[type];
@@ -1538,33 +1297,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // State Management
     function updateColumnStates() {
         // Type Column is always active
-        if (msType) msType.setDisabled(false);
+        if (tiType) tiType.setDisabled(false);
         
         // Device Column
         if (selectedType) {
             colDevice.classList.remove('disabled');
-            if (msDevice) msDevice.setDisabled(false);
-            btnAddDevice.disabled = false;
+            if (tiDevice) tiDevice.setDisabled(false);
         } else {
             colDevice.classList.add('disabled');
-            if (msDevice) msDevice.setDisabled(true);
-            btnAddDevice.disabled = true;
+            if (tiDevice) tiDevice.setDisabled(true);
         }
 
         // Station Column
         if (selectedDevice) {
             colStation.classList.remove('disabled');
-            if (msStation) msStation.setDisabled(false);
-            btnAddStation.disabled = false;
+            if (tiStation) tiStation.setDisabled(false);
         } else {
             colStation.classList.add('disabled');
-            if (msStation) msStation.setDisabled(true);
-            btnAddStation.disabled = true;
+            if (tiStation) tiStation.setDisabled(true);
         }
     }
 
     // Initial Calls
-    initCascadeDropdowns();
+    initCascadeInputs();
     renderCascadeLists();
 
 });
